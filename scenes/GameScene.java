@@ -10,7 +10,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RasterFormatException;
 import javax.imageio.ImageIO;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +57,15 @@ public class GameScene extends JPanel {
     private int hackerDamage = 0;
 
     // ==========================================
-    // 3. ASSETS
+    // 3. SYSTEM RESOURCE (SR)
+    // ==========================================
+
+    private int systemResource = 3;
+
+    private static final int SR_PER_TURN = 1;
+
+    // ==========================================
+    // 4. ASSETS
     // ==========================================
 
     private BufferedImage background;
@@ -69,7 +76,7 @@ public class GameScene extends JPanel {
     private BufferedImage hpBarImage;
 
     // ==========================================
-    // 4. CARD DATA
+    // 5. CARD DATA
     // ==========================================
 
     // Player Deck
@@ -95,7 +102,7 @@ public class GameScene extends JPanel {
     };
 
     // ==========================================
-    // 5. HAND POSITION
+    // 6. HAND POSITION
     // ==========================================
 
     private static final int CARD_WIDTH = 235;
@@ -109,7 +116,7 @@ public class GameScene extends JPanel {
     private static final int SELECT_OFFSET = 60;
 
     // ==========================================
-    // 6. DECK POSITION
+    // 7. DECK POSITION
     // ==========================================
 
     private static final int DECK_X = 115;
@@ -119,7 +126,7 @@ public class GameScene extends JPanel {
     private static final int DECK_HEIGHT = 290;
 
     // ==========================================
-    // 7. HACKER CARD POSITION
+    // 8. HACKER CARD POSITION
     // ==========================================
 
     private static final int BOT_CARD_X = 800;
@@ -129,7 +136,7 @@ public class GameScene extends JPanel {
     private static final int BOT_CARD_HEIGHT = 500;
 
     // ==========================================
-    // 8. HP BAR POSITION
+    // 9. HP BAR POSITION
     // ==========================================
 
     private static final int HP_BAR_WIDTH = 340;
@@ -137,13 +144,9 @@ public class GameScene extends JPanel {
 
     private static final int HP_BAR_Y = 25;
 
-    // Player HP
     private static final int PLAYER_HP_X = 220;
-
-    // Hacker HP
     private static final int HACKER_HP_X = 1360;
 
-    // HP Bar inner area
     private static final int HP_INNER_X = 14;
     private static final int HP_INNER_Y = 14;
 
@@ -151,14 +154,24 @@ public class GameScene extends JPanel {
     private static final int HP_INNER_HEIGHT = 57;
 
     // ==========================================
-    // 9. USE CARD BUTTON
+    // 10. SR DISPLAY POSITION
+    // ==========================================
+
+    private static final int SR_X = 325;
+    private static final int SR_Y = 625;
+
+    private static final int SR_WIDTH = 90;
+    private static final int SR_HEIGHT = 52;
+
+    // ==========================================
+    // 11. USE CARD BUTTON
     // ==========================================
 
     private final Rectangle useCardButton =
         new Rectangle(1530, 955, 350, 85);
 
     // ==========================================
-    // 10. CONSTRUCTOR
+    // 12. CONSTRUCTOR
     // ==========================================
 
     public GameScene() {
@@ -177,7 +190,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 11. LOAD ASSETS
+    // 13. LOAD ASSETS
     // ==========================================
 
     private void loadAssets() {
@@ -224,7 +237,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 12. INITIALIZE GAME
+    // 14. INITIALIZE GAME
     // ==========================================
 
     private void initializeGame() {
@@ -245,12 +258,15 @@ public class GameScene extends JPanel {
             drawCard();
         }
 
+        // Initial SR = 3
+        systemResource = 3;
+
         // Start First Turn
         startTurn();
     }
 
     // ==========================================
-    // 13. CREATE DECK
+    // 15. CREATE DECK
     // ==========================================
 
     private void createDeck() {
@@ -269,7 +285,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 14. DRAW CARD
+    // 16. DRAW CARD
     // ==========================================
 
     private void drawCard() {
@@ -301,7 +317,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 15. START TURN
+    // 17. START TURN
     // ==========================================
 
     private void startTurn() {
@@ -310,7 +326,6 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // Stop previous timer if exists
         stopPhaseTimer();
 
         turnNumber++;
@@ -319,14 +334,31 @@ public class GameScene extends JPanel {
             "\n========== TURN " + turnNumber + " =========="
         );
 
-        // Reset selected card
+        // ----------------------------------
+        // SYSTEM RESOURCE
+        // ----------------------------------
+
+        // Turn 1 uses starting SR = 3
+        // Turn 2 onwards gains +1 SR
+
+        if (turnNumber > 1) {
+
+            systemResource += SR_PER_TURN;
+        }
+
+        System.out.println(
+            "System Resource: " + systemResource
+        );
+
+        // ----------------------------------
+        // RESET STATUS
+        // ----------------------------------
+
         selectedIndex = -1;
 
-        // Reset Damage Summary
         playerDamage = 0;
         hackerDamage = 0;
 
-        // Clear Hacker Card
         hackerAttackCard = null;
 
         // Auto Draw Card
@@ -354,7 +386,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 16. REVEAL HACKER CARD
+    // 18. REVEAL HACKER CARD
     // ==========================================
 
     private void revealHackerCard() {
@@ -389,7 +421,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 17. STOP TIMER
+    // 19. STOP TIMER
     // ==========================================
 
     private void stopPhaseTimer() {
@@ -403,7 +435,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 18. MOUSE LISTENER
+    // 20. MOUSE LISTENER
     // ==========================================
 
     private void setupMouseListener() {
@@ -438,7 +470,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 19. HANDLE MOUSE CLICK
+    // 21. HANDLE MOUSE CLICK
     // ==========================================
 
     private void handleMouseClick(int mouseX, int mouseY) {
@@ -481,7 +513,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 20. GET CARD POSITION
+    // 22. GET CARD POSITION
     // ==========================================
 
     private Rectangle getCardBounds(int index) {
@@ -506,7 +538,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 21. CONFIRM CARD USE
+    // 23. CONFIRM CARD USE
     // ==========================================
 
     private void confirmCardUse() {
@@ -527,6 +559,30 @@ public class GameScene extends JPanel {
         // Get Selected Card
         CardData playerCard = hand.get(selectedIndex);
 
+        // ----------------------------------
+        // CHECK SYSTEM RESOURCE
+        // ----------------------------------
+
+        int cardCost = playerCard.getCost();
+
+        if (systemResource < cardCost) {
+
+            System.out.println(
+                "Not enough System Resource!"
+            );
+
+            System.out.println(
+                "Required: " + cardCost
+                + " | Available: " + systemResource
+            );
+
+            // ไม่เสียการ์ด
+            // ไม่เปลี่ยนเทิร์น
+            repaint();
+
+            return;
+        }
+
         System.out.println(
             "\n========== CARD USED =========="
         );
@@ -536,10 +592,27 @@ public class GameScene extends JPanel {
         );
 
         System.out.println(
+            "Card Cost: " + cardCost
+        );
+
+        System.out.println(
             "Hacker Card: " + hackerAttackCard.getName()
         );
 
-        // Store HP Before Damage
+        // ----------------------------------
+        // SPEND SYSTEM RESOURCE
+        // ----------------------------------
+
+        systemResource -= cardCost;
+
+        System.out.println(
+            "Remaining SR: " + systemResource
+        );
+
+        // ----------------------------------
+        // STORE HP BEFORE DAMAGE
+        // ----------------------------------
+
         int playerHPBefore = playerHP;
         int hackerHPBefore = hackerHP;
 
@@ -582,7 +655,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 22. DAMAGE CALCULATION
+    // 24. DAMAGE CALCULATION
     // ==========================================
 
     private void calculateDamage(
@@ -613,6 +686,7 @@ public class GameScene extends JPanel {
 
             hackerHP -= 10;
         }
+
         if (
             "MFA".equals(playerCard.getName()) &&
             "Malware".equals(hackerCard.getName())
@@ -620,6 +694,7 @@ public class GameScene extends JPanel {
 
             playerHP -= 5;
         }
+
         if (
             "MFA".equals(playerCard.getName()) &&
             "DDoS".equals(hackerCard.getName())
@@ -630,7 +705,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 23. SHOW DAMAGE SUMMARY
+    // 25. SHOW DAMAGE SUMMARY
     // ==========================================
 
     private void showDamageSummary() {
@@ -669,7 +744,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 24. CHECK GAME OVER
+    // 26. CHECK GAME OVER
     // ==========================================
 
     private void checkGameOver() {
@@ -705,7 +780,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 25. DRAW DECK
+    // 27. DRAW DECK
     // ==========================================
 
     private void drawDeck(Graphics2D g2) {
@@ -744,7 +819,107 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 26. DRAW HP BAR
+    // 28. DRAW SYSTEM RESOURCE
+    // ==========================================
+
+    private void drawSystemResource(Graphics2D g2) {
+
+        int x = SR_X;
+        int y = SR_Y;
+
+        int w = SR_WIDTH;
+        int h = SR_HEIGHT;
+
+        // Shadow
+        g2.setColor(Color.BLACK);
+
+        g2.fillRoundRect(
+            x + 3,
+            y + 4,
+            w,
+            h,
+            12,
+            12
+        );
+
+        // Background
+        g2.setColor(new Color(45, 55, 95));
+
+        g2.fillRoundRect(
+            x,
+            y,
+            w,
+            h,
+            12,
+            12
+        );
+
+        // Border
+        g2.setColor(Color.BLACK);
+
+        g2.setStroke(
+            new BasicStroke(4)
+        );
+
+        g2.drawRoundRect(
+            x,
+            y,
+            w,
+            h,
+            12,
+            12
+        );
+
+        // SR Icon - Blue Diamond
+        int centerX = x + 22;
+        int centerY = y + 26;
+
+        Polygon diamond = new Polygon();
+
+        diamond.addPoint(centerX, centerY - 16);
+        diamond.addPoint(centerX + 15, centerY);
+        diamond.addPoint(centerX, centerY + 16);
+        diamond.addPoint(centerX - 15, centerY);
+
+        g2.setColor(new Color(95, 170, 255));
+
+        g2.fillPolygon(diamond);
+
+        g2.setColor(Color.WHITE);
+
+        g2.setStroke(
+            new BasicStroke(2)
+        );
+
+        g2.drawPolygon(diamond);
+
+        // SR Label
+        g2.setColor(Color.WHITE);
+
+        g2.setFont(
+            new Font("Tahoma", Font.BOLD, 14)
+        );
+
+        g2.drawString(
+            "SR",
+            x + 43,
+            y + 19
+        );
+
+        // SR Value
+        g2.setFont(
+            new Font("Tahoma", Font.BOLD, 23)
+        );
+
+        g2.drawString(
+            String.valueOf(systemResource),
+            x + 44,
+            y + 42
+        );
+    }
+
+    // ==========================================
+    // 29. DRAW HP BAR
     // ==========================================
 
     private void drawHP(Graphics2D g2) {
@@ -769,7 +944,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 27. DRAW SINGLE HP BAR
+    // 30. DRAW SINGLE HP BAR
     // ==========================================
 
     private void drawSingleHPBar(
@@ -914,7 +1089,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 28. DRAW TURN
+    // 31. DRAW TURN
     // ==========================================
 
     private void drawTurn(Graphics2D g2) {
@@ -933,7 +1108,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 29. DRAW HAND CARD
+    // 32. DRAW HAND CARD
     // ==========================================
 
     private void drawCard(Graphics2D g2, int index) {
@@ -957,7 +1132,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 30. DRAW USE CARD BUTTON
+    // 33. DRAW USE CARD BUTTON
     // ==========================================
 
     private void drawUseCardButton(Graphics2D g2) {
@@ -1057,7 +1232,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 31. DRAW GAME OVER
+    // 34. DRAW GAME OVER
     // ==========================================
 
     private void drawGameOver(Graphics2D g2) {
@@ -1097,7 +1272,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 32. PAINT COMPONENT
+    // 35. PAINT COMPONENT
     // ==========================================
 
     @Override
@@ -1197,6 +1372,12 @@ public class GameScene extends JPanel {
 
             drawCard(g2, selectedIndex);
         }
+
+        // ----------------------------------
+        // SYSTEM RESOURCE
+        // ----------------------------------
+
+        drawSystemResource(g2);
 
         // ----------------------------------
         // USE CARD BUTTON
