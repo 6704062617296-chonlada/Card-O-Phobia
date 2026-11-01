@@ -7,7 +7,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RasterFormatException;
 import javax.imageio.ImageIO;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +64,10 @@ public class GameScene extends JPanel {
     private BufferedImage background;
     private BufferedImage cardImage;
 
+    // HP Assets
+    private BufferedImage hpFrameImage;
+    private BufferedImage hpBarImage;
+
     // ==========================================
     // 4. CARD DATA
     // ==========================================
@@ -81,7 +87,7 @@ public class GameScene extends JPanel {
     // Random
     private Random random = new Random();
 
-    // Hacker card types (ใช้ภาพเดียวกันชั่วคราว)
+    // Hacker Card Types
     private final String[] hackerCardTypes = {
         "Phishing",
         "Malware",
@@ -123,14 +129,36 @@ public class GameScene extends JPanel {
     private static final int BOT_CARD_HEIGHT = 500;
 
     // ==========================================
-    // 8. USE CARD BUTTON
+    // 8. HP BAR POSITION
+    // ==========================================
+
+    private static final int HP_BAR_WIDTH = 340;
+    private static final int HP_BAR_HEIGHT = 85;
+
+    private static final int HP_BAR_Y = 25;
+
+    // Player HP
+    private static final int PLAYER_HP_X = 220;
+
+    // Hacker HP
+    private static final int HACKER_HP_X = 1360;
+
+    // HP Bar inner area
+    private static final int HP_INNER_X = 14;
+    private static final int HP_INNER_Y = 14;
+
+    private static final int HP_INNER_WIDTH = 312;
+    private static final int HP_INNER_HEIGHT = 57;
+
+    // ==========================================
+    // 9. USE CARD BUTTON
     // ==========================================
 
     private final Rectangle useCardButton =
         new Rectangle(1530, 955, 350, 85);
 
     // ==========================================
-    // 9. CONSTRUCTOR
+    // 10. CONSTRUCTOR
     // ==========================================
 
     public GameScene() {
@@ -149,24 +177,45 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 10. LOAD ASSETS
+    // 11. LOAD ASSETS
     // ==========================================
 
     private void loadAssets() {
 
         try {
 
+            // Background
             background = ImageIO.read(
                 new File("assets/playing.png")
             );
 
+            // Card
             cardImage = ImageIO.read(
                 new File("assets/cardMFA.png")
             );
 
-            System.out.println("Assets loaded!");
+            // HP Frame
+            BufferedImage frameSource = ImageIO.read(
+                new File("assets/Hp_frame.png")
+            );
 
-        } catch (IOException e) {
+            // HP Bar
+            BufferedImage barSource = ImageIO.read(
+                new File("assets/Hp_bar.png")
+            );
+
+            // Crop transparent area
+            hpFrameImage = frameSource.getSubimage(
+                64, 160, 384, 96
+            );
+
+            hpBarImage = barSource.getSubimage(
+                80, 176, 352, 64
+            );
+
+            System.out.println("Assets loaded successfully!");
+
+        } catch (IOException | RasterFormatException e) {
 
             System.out.println("Cannot load assets!");
 
@@ -175,7 +224,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 11. INITIALIZE GAME
+    // 12. INITIALIZE GAME
     // ==========================================
 
     private void initializeGame() {
@@ -184,24 +233,24 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // สร้างกองการ์ด
+        // Create Deck
         createDeck();
 
-        // สุ่มลำดับการ์ด
+        // Shuffle Deck
         Collections.shuffle(deck);
 
-        // เริ่มต้น Player มีการ์ด 4 ใบ
+        // Starting Hand = 4 Cards
         for (int i = 0; i < 4; i++) {
 
             drawCard();
         }
 
-        // เริ่มเทิร์นแรก
+        // Start First Turn
         startTurn();
     }
 
     // ==========================================
-    // 12. CREATE DECK
+    // 13. CREATE DECK
     // ==========================================
 
     private void createDeck() {
@@ -220,11 +269,12 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 13. DRAW CARD
+    // 14. DRAW CARD
     // ==========================================
 
     private void drawCard() {
 
+        // Check Hand Limit
         if (hand.size() >= MAX_HAND) {
 
             System.out.println("Hand is full!");
@@ -232,6 +282,7 @@ public class GameScene extends JPanel {
             return;
         }
 
+        // Check Deck
         if (deck.isEmpty()) {
 
             System.out.println("Deck is empty!");
@@ -239,6 +290,7 @@ public class GameScene extends JPanel {
             return;
         }
 
+        // Draw Top Card
         CardData card = deck.remove(0);
 
         hand.add(card);
@@ -249,7 +301,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 14. START TURN
+    // 15. START TURN
     // ==========================================
 
     private void startTurn() {
@@ -257,6 +309,9 @@ public class GameScene extends JPanel {
         if (gameOver) {
             return;
         }
+
+        // Stop previous timer if exists
+        stopPhaseTimer();
 
         turnNumber++;
 
@@ -267,17 +322,17 @@ public class GameScene extends JPanel {
         // Reset selected card
         selectedIndex = -1;
 
-        // Reset damage summary
+        // Reset Damage Summary
         playerDamage = 0;
         hackerDamage = 0;
 
-        // ล้างการ์ด Hacker
+        // Clear Hacker Card
         hackerAttackCard = null;
 
-        // จั่วการ์ดอัตโนมัติ
+        // Auto Draw Card
         drawCard();
 
-        // เปลี่ยน State เป็นรอ Hacker
+        // Set Phase
         currentPhase = GamePhase.HACKER_WAITING;
 
         System.out.println(
@@ -286,7 +341,7 @@ public class GameScene extends JPanel {
 
         repaint();
 
-        // รอ 3 วินาที ก่อน Hacker เปิดการ์ด
+        // Wait 3 seconds
         phaseTimer = new Timer(WAIT_DURATION, e -> {
 
             revealHackerCard();
@@ -294,11 +349,12 @@ public class GameScene extends JPanel {
         });
 
         phaseTimer.setRepeats(false);
+
         phaseTimer.start();
     }
 
     // ==========================================
-    // 15. REVEAL HACKER CARD
+    // 16. REVEAL HACKER CARD
     // ==========================================
 
     private void revealHackerCard() {
@@ -307,14 +363,14 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // สุ่มประเภทการ์ด Hacker
+        // Random Hacker Card
         int randomIndex =
             random.nextInt(hackerCardTypes.length);
 
         String selectedType =
             hackerCardTypes[randomIndex];
 
-        // สร้างการ์ด Hacker
+        // Create Hacker Card
         hackerAttackCard = new CardData(
             "HACKER_ATTACK_" + turnNumber,
             selectedType,
@@ -322,7 +378,7 @@ public class GameScene extends JPanel {
             cardImage
         );
 
-        // เปิดให้ Player เลือกการ์ด
+        // Allow Player Action
         currentPhase = GamePhase.PLAYER_ACTION;
 
         System.out.println(
@@ -333,7 +389,21 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 16. MOUSE LISTENER
+    // 17. STOP TIMER
+    // ==========================================
+
+    private void stopPhaseTimer() {
+
+        if (phaseTimer != null) {
+
+            phaseTimer.stop();
+
+            phaseTimer = null;
+        }
+    }
+
+    // ==========================================
+    // 18. MOUSE LISTENER
     // ==========================================
 
     private void setupMouseListener() {
@@ -347,8 +417,8 @@ public class GameScene extends JPanel {
                     return;
                 }
 
-                // แปลง Mouse Coordinate
-                // เป็น Game Coordinate
+                // Convert Mouse Coordinate
+                // to Game Coordinate
 
                 double scaleX =
                     (double) GAME_WIDTH / getWidth();
@@ -368,19 +438,17 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 17. HANDLE MOUSE CLICK
+    // 19. HANDLE MOUSE CLICK
     // ==========================================
 
     private void handleMouseClick(int mouseX, int mouseY) {
 
-        // ระหว่างรอ Hacker และสรุป Damage
-        // ไม่อนุญาตให้คลิกการ์ด
-
+        // Only Player Action can interact
         if (currentPhase != GamePhase.PLAYER_ACTION) {
             return;
         }
 
-        // ตรวจสอบปุ่ม USE CARD
+        // Use Card Button
         if (useCardButton.contains(mouseX, mouseY)) {
 
             confirmCardUse();
@@ -388,14 +456,14 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // ตรวจสอบการคลิกการ์ด
+        // Check Card Selection
         for (int i = hand.size() - 1; i >= 0; i--) {
 
             Rectangle bounds = getCardBounds(i);
 
             if (bounds.contains(mouseX, mouseY)) {
 
-                // คลิกใบเดิมเพื่อยกเลิก
+                // Click Same Card = Deselect
                 if (selectedIndex == i) {
 
                     selectedIndex = -1;
@@ -413,7 +481,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 18. GET CARD POSITION
+    // 20. GET CARD POSITION
     // ==========================================
 
     private Rectangle getCardBounds(int index) {
@@ -423,6 +491,7 @@ public class GameScene extends JPanel {
 
         int y = START_Y;
 
+        // Move Selected Card Up
         if (selectedIndex == index) {
 
             y -= SELECT_OFFSET;
@@ -437,7 +506,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 19. CONFIRM CARD USE
+    // 21. CONFIRM CARD USE
     // ==========================================
 
     private void confirmCardUse() {
@@ -455,7 +524,7 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // เก็บการ์ดที่ Player เลือก
+        // Get Selected Card
         CardData playerCard = hand.get(selectedIndex);
 
         System.out.println(
@@ -470,18 +539,21 @@ public class GameScene extends JPanel {
             "Hacker Card: " + hackerAttackCard.getName()
         );
 
-        // เก็บ HP ก่อนคำนวณ
+        // Store HP Before Damage
         int playerHPBefore = playerHP;
         int hackerHPBefore = hackerHP;
 
-        // เรียกฟังก์ชันคำนวณ Damage
-        calculateDamage(playerCard, hackerAttackCard);
+        // Calculate Damage
+        calculateDamage(
+            playerCard,
+            hackerAttackCard
+        );
 
-        // ป้องกัน HP ติดลบ
+        // Prevent Negative HP
         playerHP = Math.max(0, playerHP);
         hackerHP = Math.max(0, hackerHP);
 
-        // คำนวณ Damage จากผลต่าง HP
+        // Calculate Damage Summary
         playerDamage = Math.max(
             0,
             playerHPBefore - playerHP
@@ -492,26 +564,25 @@ public class GameScene extends JPanel {
             hackerHPBefore - hackerHP
         );
 
-        // นำการ์ดออกจากมือ
+        // Remove Used Card
         hand.remove(selectedIndex);
 
         selectedIndex = -1;
 
-        // แสดงผล Damage
         System.out.println(
-            "Player received damage: " + playerDamage
+            "Player Damage: " + playerDamage
         );
 
         System.out.println(
-            "Hacker received damage: " + hackerDamage
+            "Hacker Damage: " + hackerDamage
         );
 
-        // เข้าสู่ Damage Summary
+        // Show Damage Summary
         showDamageSummary();
     }
 
     // ==========================================
-    // 20. DAMAGE CALCULATION
+    // 22. DAMAGE CALCULATION
     // ==========================================
 
     private void calculateDamage(
@@ -559,7 +630,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 21. SHOW DAMAGE SUMMARY
+    // 23. SHOW DAMAGE SUMMARY
     // ==========================================
 
     private void showDamageSummary() {
@@ -572,12 +643,12 @@ public class GameScene extends JPanel {
 
         repaint();
 
-        // แสดงผล Damage เป็นเวลา 3 วินาที
+        // Show Damage for 3 Seconds
         phaseTimer = new Timer(SUMMARY_DURATION, e -> {
 
-            phaseTimer.stop();
+            stopPhaseTimer();
 
-            // ตรวจสอบว่าเกมจบหรือยัง
+            // Check Game Over
             if (playerHP <= 0 || hackerHP <= 0) {
 
                 checkGameOver();
@@ -587,17 +658,18 @@ public class GameScene extends JPanel {
                 return;
             }
 
-            // เริ่มเทิร์นใหม่
+            // Start Next Turn
             startTurn();
 
         });
 
         phaseTimer.setRepeats(false);
+
         phaseTimer.start();
     }
 
     // ==========================================
-    // 22. CHECK GAME OVER
+    // 24. CHECK GAME OVER
     // ==========================================
 
     private void checkGameOver() {
@@ -609,6 +681,8 @@ public class GameScene extends JPanel {
             gameOver = true;
 
             currentPhase = GamePhase.GAME_OVER;
+
+            stopPhaseTimer();
 
             System.out.println(
                 "GAME OVER - HACKER WINS"
@@ -622,6 +696,8 @@ public class GameScene extends JPanel {
 
             currentPhase = GamePhase.GAME_OVER;
 
+            stopPhaseTimer();
+
             System.out.println(
                 "SYSTEM SECURED - PLAYER WINS"
             );
@@ -629,7 +705,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 23. DRAW DECK
+    // 25. DRAW DECK
     // ==========================================
 
     private void drawDeck(Graphics2D g2) {
@@ -638,7 +714,7 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // วาดการ์ดซ้อนกัน
+        // Draw Stacked Cards
         for (int i = 2; i >= 0; i--) {
 
             int offset = i * 5;
@@ -653,7 +729,7 @@ public class GameScene extends JPanel {
             );
         }
 
-        // จำนวนการ์ดที่เหลือ
+        // Remaining Cards
         g2.setColor(Color.WHITE);
 
         g2.setFont(
@@ -668,80 +744,177 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 24. DRAW HP
+    // 26. DRAW HP BAR
     // ==========================================
 
     private void drawHP(Graphics2D g2) {
 
-        g2.setFont(
-            new Font("Tahoma", Font.BOLD, 28)
-        );
-
         // Player HP
-        g2.setColor(new Color(30, 100, 30));
-
-        g2.drawString(
-            "HP: " + playerHP + " / 30",
-            260,
-            120
+        drawSingleHPBar(
+            g2,
+            PLAYER_HP_X,
+            HP_BAR_Y,
+            playerHP,
+            true
         );
 
         // Hacker HP
-        g2.setColor(new Color(180, 40, 40));
+        drawSingleHPBar(
+            g2,
+            HACKER_HP_X,
+            HP_BAR_Y,
+            hackerHP,
+            false
+        );
+    }
 
-        g2.drawString(
-            "HP: " + hackerHP + " / 30",
-            1470,
-            120
+    // ==========================================
+    // 27. DRAW SINGLE HP BAR
+    // ==========================================
+
+    private void drawSingleHPBar(
+        Graphics2D g2,
+        int x,
+        int y,
+        int currentHP,
+        boolean fillFromLeft
+    ) {
+
+        if (hpFrameImage == null || hpBarImage == null) {
+            return;
+        }
+
+        // Clamp HP between 0 and 30
+        int hp = Math.max(0, Math.min(30, currentHP));
+
+        // Calculate HP Percentage
+        double hpPercentage = hp / 30.0;
+
+        // Calculate Filled Width
+        int fillWidth = (int)(
+            HP_INNER_WIDTH * hpPercentage
         );
 
         // ----------------------------------
-        // PLAYER DAMAGE
+        // DRAW HP BAR
         // ----------------------------------
 
-        if (
-            currentPhase == GamePhase.DAMAGE_SUMMARY &&
-            playerDamage > 0
-        ) {
+        if (fillWidth > 0) {
 
-            g2.setColor(new Color(220, 40, 40));
+            int barX = x + HP_INNER_X;
+            int barY = y + HP_INNER_Y;
 
-            g2.setFont(
-                new Font("Tahoma", Font.BOLD, 30)
+            int sourceWidth = (int)(
+                hpBarImage.getWidth() * hpPercentage
             );
 
-            g2.drawString(
-                "-" + playerDamage,
-                260,
-                165
+            int sourceX = 0;
+
+            // Hacker HP decreases from right to left
+            if (!fillFromLeft) {
+
+                barX += HP_INNER_WIDTH - fillWidth;
+
+                sourceX =
+                    hpBarImage.getWidth() - sourceWidth;
+            }
+
+            g2.drawImage(
+                hpBarImage,
+
+                // Destination
+                barX,
+                barY,
+                barX + fillWidth,
+                barY + HP_INNER_HEIGHT,
+
+                // Source
+                sourceX,
+                0,
+                sourceX + sourceWidth,
+                hpBarImage.getHeight(),
+
+                this
             );
         }
 
         // ----------------------------------
-        // HACKER DAMAGE
+        // DRAW FRAME
         // ----------------------------------
 
-        if (
-            currentPhase == GamePhase.DAMAGE_SUMMARY &&
-            hackerDamage > 0
-        ) {
+        g2.drawImage(
+            hpFrameImage,
+            x,
+            y,
+            HP_BAR_WIDTH,
+            HP_BAR_HEIGHT,
+            this
+        );
 
-            g2.setColor(new Color(220, 40, 40));
+        // ----------------------------------
+        // DRAW HP TEXT
+        // ----------------------------------
 
-            g2.setFont(
-                new Font("Tahoma", Font.BOLD, 30)
-            );
+        g2.setColor(Color.WHITE);
 
-            g2.drawString(
-                "-" + hackerDamage,
-                1470,
-                165
-            );
+        g2.setFont(
+            new Font("Tahoma", Font.BOLD, 22)
+        );
+
+        String hpText = hp + " / 30";
+
+        FontMetrics fm = g2.getFontMetrics();
+
+        int textX =
+            x + (HP_BAR_WIDTH - fm.stringWidth(hpText)) / 2;
+
+        int textY =
+            y + (HP_BAR_HEIGHT - fm.getHeight()) / 2
+                + fm.getAscent();
+
+        g2.drawString(
+            hpText,
+            textX,
+            textY
+        );
+
+        // ----------------------------------
+        // DRAW DAMAGE SUMMARY
+        // ----------------------------------
+
+        if (currentPhase == GamePhase.DAMAGE_SUMMARY) {
+
+            int damage = fillFromLeft
+                ? playerDamage
+                : hackerDamage;
+
+            if (damage > 0) {
+
+                g2.setColor(new Color(230, 40, 40));
+
+                g2.setFont(
+                    new Font("Tahoma", Font.BOLD, 28)
+                );
+
+                String damageText = "-" + damage;
+
+                FontMetrics damageFM = g2.getFontMetrics();
+
+                int damageX =
+                    x + (HP_BAR_WIDTH -
+                    damageFM.stringWidth(damageText)) / 2;
+
+                g2.drawString(
+                    damageText,
+                    damageX,
+                    y + HP_BAR_HEIGHT + 35
+                );
+            }
         }
     }
 
     // ==========================================
-    // 25. DRAW TURN
+    // 28. DRAW TURN
     // ==========================================
 
     private void drawTurn(Graphics2D g2) {
@@ -760,7 +933,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 26. DRAW HAND CARD
+    // 29. DRAW HAND CARD
     // ==========================================
 
     private void drawCard(Graphics2D g2, int index) {
@@ -784,7 +957,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 27. DRAW USE CARD BUTTON
+    // 30. DRAW USE CARD BUTTON
     // ==========================================
 
     private void drawUseCardButton(Graphics2D g2) {
@@ -795,7 +968,7 @@ public class GameScene extends JPanel {
         int w = useCardButton.width;
         int h = useCardButton.height;
 
-        // เงาด้านล่าง
+        // Shadow
         g2.setColor(Color.BLACK);
 
         g2.fillRoundRect(
@@ -807,7 +980,7 @@ public class GameScene extends JPanel {
             35
         );
 
-        // สีพื้นหลังปุ่ม
+        // Button Background
         if (selectedIndex >= 0) {
 
             g2.setColor(new Color(190, 190, 190));
@@ -826,7 +999,7 @@ public class GameScene extends JPanel {
             35
         );
 
-        // ขอบดำ
+        // Black Border
         g2.setColor(Color.BLACK);
 
         g2.setStroke(
@@ -842,7 +1015,7 @@ public class GameScene extends JPanel {
             35
         );
 
-        // ขอบขาว
+        // White Inner Border
         g2.setColor(Color.WHITE);
 
         g2.setStroke(
@@ -858,7 +1031,7 @@ public class GameScene extends JPanel {
             25
         );
 
-        // ข้อความ
+        // Button Text
         g2.setColor(Color.BLACK);
 
         g2.setFont(
@@ -884,7 +1057,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 28. DRAW GAME OVER
+    // 31. DRAW GAME OVER
     // ==========================================
 
     private void drawGameOver(Graphics2D g2) {
@@ -924,7 +1097,7 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 29. PAINT COMPONENT
+    // 32. PAINT COMPONENT
     // ==========================================
 
     @Override
@@ -934,13 +1107,13 @@ public class GameScene extends JPanel {
 
         Graphics2D g2 = (Graphics2D) g.create();
 
-        // Pixel Art ไม่ให้เบลอ
+        // Pixel Art Rendering
         g2.setRenderingHint(
             RenderingHints.KEY_INTERPOLATION,
             RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
         );
 
-        // Scale ตามขนาดหน้าต่าง
+        // Scale Window
         double scaleX =
             (double) getWidth() / GAME_WIDTH;
 
@@ -966,7 +1139,7 @@ public class GameScene extends JPanel {
         }
 
         // ----------------------------------
-        // HP
+        // HP BAR
         // ----------------------------------
 
         drawHP(g2);
@@ -987,9 +1160,6 @@ public class GameScene extends JPanel {
         // HACKER ATTACK CARD
         // ----------------------------------
 
-        // ช่วง HACKER_WAITING จะไม่มีการ์ดตรงกลาง
-        // เมื่อครบ 3 วินาทีจึงแสดงการ์ด
-
         if (
             hackerAttackCard != null &&
             hackerAttackCard.getImage() != null
@@ -1009,7 +1179,7 @@ public class GameScene extends JPanel {
         // PLAYER HAND
         // ----------------------------------
 
-        // วาดการ์ดที่ไม่ได้เลือกก่อน
+        // Draw Unselected Cards First
         for (int i = 0; i < hand.size(); i++) {
 
             if (i == selectedIndex) {
@@ -1019,7 +1189,7 @@ public class GameScene extends JPanel {
             drawCard(g2, i);
         }
 
-        // วาดการ์ดที่เลือกทีหลัง
+        // Draw Selected Card Last
         if (
             selectedIndex >= 0 &&
             selectedIndex < hand.size()
