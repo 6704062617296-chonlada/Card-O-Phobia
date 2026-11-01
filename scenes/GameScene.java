@@ -47,29 +47,29 @@ public class GameScene extends JPanel {
     // 4. CARD DATA
     // ==========================================
 
-    // กองการ์ดของ Player
+    // กองการ์ด Player
     private ArrayList<CardData> deck = new ArrayList<>();
 
     // การ์ดในมือ Player
     private ArrayList<CardData> hand = new ArrayList<>();
 
-    // การ์ดโจมตีของ Hacker ในเทิร์นปัจจุบัน
+    // การ์ดโจมตีของ Hacker
     private CardData hackerAttackCard;
 
-    // Index ของการ์ดที่ Player เลือก
+    // Index ของการ์ดที่เลือก
     private int selectedIndex = -1;
 
     // ==========================================
     // 5. HAND POSITION
     // ==========================================
 
-    private static final int CARD_WIDTH = 190;
-    private static final int CARD_HEIGHT = 269;
+    private static final int CARD_WIDTH = 235;
+    private static final int CARD_HEIGHT = 333;
 
     private static final int START_X = 420;
     private static final int START_Y = 690;
 
-    private static final int CARD_GAP = 30;
+    private static final int CARD_GAP = -25;
 
     private static final int SELECT_OFFSET = 60;
 
@@ -87,17 +87,15 @@ public class GameScene extends JPanel {
     // 7. HACKER CARD POSITION
     // ==========================================
 
-    private static final int BOT_CARD_X = 815;
+    private static final int BOT_CARD_X = 800;
     private static final int BOT_CARD_Y = 145;
 
-    private static final int BOT_CARD_WIDTH = 270;
-    private static final int BOT_CARD_HEIGHT = 373;
+    private static final int BOT_CARD_WIDTH = 353;
+    private static final int BOT_CARD_HEIGHT = 500;
 
     // ==========================================
     // 8. USE CARD BUTTON
     // ==========================================
-
-    // Hitbox ของปุ่มลงการ์ดที่อยู่ใน Background
 
     private final Rectangle useCardButton =
         new Rectangle(1530, 955, 350, 85);
@@ -160,19 +158,18 @@ public class GameScene extends JPanel {
         // สร้างกองการ์ด
         createDeck();
 
-        // สุ่มลำดับการ์ด
+        // สุ่มการ์ด
         Collections.shuffle(deck);
 
-        // เริ่มต้น Player มีการ์ด 4 ใบ
+        // เริ่มต้นมีการ์ด 4 ใบ
         for (int i = 0; i < 4; i++) {
 
             drawCard();
         }
 
         // เริ่มเทิร์นแรก
-        // จะจั่วเพิ่มอัตโนมัติ 1 ใบ
+        // จั่วเพิ่มอัตโนมัติ 1 ใบ
         startTurn();
-
     }
 
     // ==========================================
@@ -182,7 +179,6 @@ public class GameScene extends JPanel {
     private void createDeck() {
 
         // สร้างการ์ดตัวอย่าง 20 ใบ
-        // ทุกใบใช้ cardMFA.png เหมือนกันก่อน
 
         for (int i = 1; i <= 20; i++) {
 
@@ -211,7 +207,7 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // ตรวจสอบว่ากองการ์ดหมดหรือไม่
+        // ตรวจสอบกองการ์ด
         if (deck.isEmpty()) {
 
             System.out.println("Deck is empty!");
@@ -219,10 +215,10 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // หยิบการ์ดใบบนสุดจาก Deck
+        // หยิบการ์ดจากกอง
         CardData card = deck.remove(0);
 
-        // เพิ่มการ์ดเข้า Hand
+        // เพิ่มเข้า Hand
         hand.add(card);
 
         System.out.println(
@@ -242,10 +238,11 @@ public class GameScene extends JPanel {
 
         turnNumber++;
 
-        System.out.println("\n========== TURN "
-            + turnNumber + " ==========");
+        System.out.println(
+            "\n========== TURN " + turnNumber + " =========="
+        );
 
-        // จั่วการ์ดอัตโนมัติเมื่อเริ่มเทิร์น
+        // จั่วการ์ดอัตโนมัติ
         drawCard();
 
         // Hacker ลงการ์ดโจมตี
@@ -260,8 +257,7 @@ public class GameScene extends JPanel {
         selectedIndex = -1;
 
         System.out.println(
-            "Hacker used: "
-            + hackerAttackCard.getName()
+            "Hacker used: " + hackerAttackCard.getName()
         );
 
         repaint();
@@ -282,8 +278,7 @@ public class GameScene extends JPanel {
                     return;
                 }
 
-                // แปลง Mouse Coordinate
-                // เป็น Game Coordinate
+                // แปลงพิกัด Mouse เป็นพิกัดเกม
 
                 double scaleX =
                     (double) GAME_WIDTH / getWidth();
@@ -312,7 +307,7 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // ตรวจสอบปุ่มใช้การ์ด
+        // ตรวจสอบการคลิกปุ่ม USE CARD
         if (useCardButton.contains(mouseX, mouseY)) {
 
             confirmCardUse();
@@ -320,21 +315,21 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // ตรวจสอบการคลิกการ์ดในมือ
+        // ตรวจสอบการคลิกการ์ด
         for (int i = hand.size() - 1; i >= 0; i--) {
 
             Rectangle bounds = getCardBounds(i);
 
             if (bounds.contains(mouseX, mouseY)) {
 
-                // คลิกการ์ดเดิม = ยกเลิก
+                // คลิกการ์ดเดิมเพื่อยกเลิก
                 if (selectedIndex == i) {
 
                     selectedIndex = -1;
 
                 } else {
 
-                    // เลือกการ์ดใหม่
+                    // เลือกการ์ดใบใหม่
                     selectedIndex = i;
                 }
 
@@ -356,7 +351,7 @@ public class GameScene extends JPanel {
 
         int y = START_Y;
 
-        // ถ้าถูกเลือก ให้ยกขึ้น
+        // ถ้าการ์ดถูกเลือก ให้เลื่อนขึ้น
         if (selectedIndex == index) {
 
             y -= SELECT_OFFSET;
@@ -380,7 +375,7 @@ public class GameScene extends JPanel {
         if (selectedIndex == -1) {
 
             System.out.println(
-                "Please select a card!"
+                "Please select a card first!"
             );
 
             return;
@@ -390,10 +385,12 @@ public class GameScene extends JPanel {
             return;
         }
 
-        // เก็บการ์ดที่เลือกไว้ก่อนนำออกจากมือ
+        // เก็บข้อมูลการ์ดที่เลือก
         CardData playerCard = hand.get(selectedIndex);
 
-        System.out.println("\n========== CARD USED ==========");
+        System.out.println(
+            "\n========== CARD USED =========="
+        );
 
         System.out.println(
             "Player Card: " + playerCard.getName()
@@ -403,22 +400,22 @@ public class GameScene extends JPanel {
             "Hacker Card: " + hackerAttackCard.getName()
         );
 
-        // ==================================
         // เรียกฟังก์ชันคำนวณ Damage
-        // ==================================
-
         calculateDamage(playerCard, hackerAttackCard);
 
-        // นำการ์ด Player ออกจากมือ
+        // นำการ์ดออกจากมือ
         hand.remove(selectedIndex);
 
+        // ยกเลิกการเลือก
         selectedIndex = -1;
 
         // ตรวจสอบผู้ชนะ
         checkGameOver();
 
         if (gameOver) {
+
             repaint();
+
             return;
         }
 
@@ -442,7 +439,6 @@ public class GameScene extends JPanel {
          *
          * เขียน Logic คำนวณ Damage เอง
          *
-         * Parameters:
          * playerCard = การ์ดที่ Player ใช้
          * hackerCard = การ์ดที่ Hacker ใช้
          *
@@ -451,9 +447,12 @@ public class GameScene extends JPanel {
          * playerHP
          * hackerHP
          *
-         * ได้โดยตรงจากฟังก์ชันนี้
-         *
+         * ได้จากฟังก์ชันนี้
          */
+        if(playerCard.getName() == "MFA" && hackerCard.getName() == "Phishing"){
+            hackerHP -= 10;
+        }
+
 
     }
 
@@ -469,7 +468,9 @@ public class GameScene extends JPanel {
 
             gameOver = true;
 
-            System.out.println("GAME OVER - HACKER WINS");
+            System.out.println(
+                "GAME OVER - HACKER WINS"
+            );
 
         } else if (hackerHP <= 0) {
 
@@ -477,7 +478,9 @@ public class GameScene extends JPanel {
 
             gameOver = true;
 
-            System.out.println("SYSTEM SECURED - PLAYER WINS");
+            System.out.println(
+                "SYSTEM SECURED - PLAYER WINS"
+            );
         }
     }
 
@@ -492,7 +495,6 @@ public class GameScene extends JPanel {
         }
 
         // วาดการ์ดซ้อนกันเพื่อจำลองกองการ์ด
-        // วาดใบหลังก่อน
 
         for (int i = 2; i >= 0; i--) {
 
@@ -596,7 +598,109 @@ public class GameScene extends JPanel {
     }
 
     // ==========================================
-    // 25. PAINT COMPONENT
+    // 25. DRAW USE CARD BUTTON
+    // ==========================================
+
+    private void drawUseCardButton(Graphics2D g2) {
+
+        int x = useCardButton.x;
+        int y = useCardButton.y;
+
+        int w = useCardButton.width;
+        int h = useCardButton.height;
+
+        // เงาด้านล่าง
+        g2.setColor(Color.BLACK);
+
+        g2.fillRoundRect(
+            x + 5,
+            y + 6,
+            w,
+            h,
+            35,
+            35
+        );
+
+        // สีพื้นหลังปุ่ม
+        if (selectedIndex >= 0) {
+
+            // มีการ์ดถูกเลือก
+            g2.setColor(new Color(190, 190, 190));
+
+        } else {
+
+            // ยังไม่ได้เลือกการ์ด
+            g2.setColor(new Color(150, 150, 150));
+        }
+
+        g2.fillRoundRect(
+            x,
+            y,
+            w,
+            h,
+            35,
+            35
+        );
+
+        // ขอบสีดำ
+        g2.setColor(Color.BLACK);
+
+        g2.setStroke(
+            new BasicStroke(6)
+        );
+
+        g2.drawRoundRect(
+            x,
+            y,
+            w,
+            h,
+            35,
+            35
+        );
+
+        // ขอบสีขาวด้านใน
+        g2.setColor(Color.WHITE);
+
+        g2.setStroke(
+            new BasicStroke(3)
+        );
+
+        g2.drawRoundRect(
+            x + 7,
+            y + 7,
+            w - 14,
+            h - 14,
+            25,
+            25
+        );
+
+        // ข้อความบนปุ่ม
+        g2.setColor(Color.BLACK);
+
+        g2.setFont(
+            new Font("Tahoma", Font.BOLD, 32)
+        );
+
+        String text = "USE CARD";
+
+        FontMetrics fm = g2.getFontMetrics();
+
+        int textX =
+            x + (w - fm.stringWidth(text)) / 2;
+
+        int textY =
+            y + (h - fm.getHeight()) / 2
+                + fm.getAscent();
+
+        g2.drawString(
+            text,
+            textX,
+            textY
+        );
+    }
+
+    // ==========================================
+    // 26. PAINT COMPONENT
     // ==========================================
 
     @Override
@@ -686,12 +790,17 @@ public class GameScene extends JPanel {
         }
 
         // วาดการ์ดที่เลือกทีหลัง
-        // เพื่อให้อยู่บนสุด
         if (selectedIndex >= 0 &&
             selectedIndex < hand.size()) {
 
             drawCard(g2, selectedIndex);
         }
+
+        // ----------------------------------
+        // USE CARD BUTTON
+        // ----------------------------------
+
+        drawUseCardButton(g2);
 
         // ----------------------------------
         // GAME OVER
