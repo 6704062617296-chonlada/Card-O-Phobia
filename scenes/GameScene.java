@@ -39,6 +39,9 @@ public class GameScene extends JPanel {
         DAMAGE_SUMMARY,
         GAME_OVER
     }
+    private final Runnable onLose;
+    private final Runnable onWin;
+    private boolean resultNotified = false;
 
     private GamePhase currentPhase;
 
@@ -179,17 +182,18 @@ public class GameScene extends JPanel {
     // ==========================================
 
     public GameScene() {
+        this(null, null);
+    }
 
-        setPreferredSize(
-            new Dimension(GAME_WIDTH, GAME_HEIGHT)
-        );
+    public GameScene(Runnable onLose, Runnable onWin) {
+        this.onLose = onLose;
+        this.onWin = onWin;
 
+        setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
         setBackground(Color.LIGHT_GRAY);
 
         loadAssets();
-
         initializeGame();
-
         setupMouseListener();
     }
 
@@ -1001,6 +1005,7 @@ public class GameScene extends JPanel {
                 playerDefensed += 8;
             }
         }
+        // hackerDamaged += 100;
         int totalPlayerDamage = Math.max(playerDamaged - (isPlayerMalware == 1 ? playerDefensed/2 : playerDefensed),0);
         playerHP -= Math.min(totalPlayerDamage, playerHP);
 
@@ -1080,34 +1085,25 @@ public class GameScene extends JPanel {
     // ==========================================
 
     private void checkGameOver() {
+        if (resultNotified) return;
 
         if (playerHP <= 0) {
-
             playerHP = 0;
-
             gameOver = true;
-
             currentPhase = GamePhase.GAME_OVER;
-
             stopPhaseTimer();
 
-            System.out.println(
-                "GAME OVER - HACKER WINS"
-            );
+            resultNotified = true;
+            if (onLose != null) onLose.run();
 
         } else if (hackerHP <= 0) {
-
             hackerHP = 0;
-
             gameOver = true;
-
             currentPhase = GamePhase.GAME_OVER;
-
             stopPhaseTimer();
 
-            System.out.println(
-                "SYSTEM SECURED - PLAYER WINS"
-            );
+            resultNotified = true;
+            if (onWin != null) onWin.run();
         }
     }
 
